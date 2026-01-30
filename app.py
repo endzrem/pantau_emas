@@ -134,5 +134,11 @@ if __name__ == '__main__':
     update_thread.start()
     
     # Run Flask app
-    # For production, set debug=False and use a production WSGI server like Gunicorn
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # WARNING: Debug mode is enabled for development only
+    # For production deployment:
+    # 1. Set debug=False
+    # 2. Use a production WSGI server like Gunicorn: gunicorn -w 4 app:app
+    # 3. Set up proper authentication for admin endpoints
+    # 4. Configure HTTPS
+    debug_mode = os.environ.get('FLASK_DEBUG', 'True') == 'True'
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)
