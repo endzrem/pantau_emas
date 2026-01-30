@@ -6,6 +6,8 @@ Real-Time Gold Price Monitoring and AI-Powered Prediction System
 
 ## 🚀 New User? Start Here!
 
+**→ [⚡ 5-Minute Getting Started](GETTING_STARTED.md)** - Fastest way to get running!
+
 **→ [📚 Complete Step-by-Step Tutorial](TUTORIAL.md)** - Perfect for beginners!
 
 **→ [⚡ Quick Start Guide](QUICKSTART.md)** - For experienced developers
@@ -76,6 +78,7 @@ Pantau Emas is a web application that monitors gold prices in real-time and uses
 
 ## Documentation
 
+- **[⚡ GETTING_STARTED.md](GETTING_STARTED.md)** - 5-minute quick start guide
 - **[📚 TUTORIAL.md](TUTORIAL.md)** - Complete step-by-step guide for beginners
 - **[⚡ QUICKSTART.md](QUICKSTART.md)** - Quick reference guide
 - **[🔒 PRODUCTION.md](PRODUCTION.md)** - Production deployment guide
