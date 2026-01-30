@@ -44,6 +44,8 @@ class GoldPricePredictor:
             prices = np.array(prices).reshape(-1, 1)
         elif isinstance(prices, pd.Series):
             prices = prices.values.reshape(-1, 1)
+        elif isinstance(prices, np.ndarray) and prices.ndim == 1:
+            prices = prices.reshape(-1, 1)
         
         # Scale the data
         scaled_data = self.scaler.fit_transform(prices)
@@ -87,6 +89,8 @@ class GoldPricePredictor:
         # Prepare input
         if isinstance(recent_prices, list):
             recent_prices = np.array(recent_prices).reshape(-1, 1)
+        elif isinstance(recent_prices, np.ndarray) and recent_prices.ndim == 1:
+            recent_prices = recent_prices.reshape(-1, 1)
         
         scaled_prices = self.scaler.transform(recent_prices[-self.sequence_length:])
         X_test = np.reshape(scaled_prices, (1, self.sequence_length, 1))
