@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantau Emas - Gold Price Monitor & Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Pantau Emas</h1>
+            <p class="subtitle">Real-Time Gold Price Monitoring & AI Prediction</p>
+        </header>
+
+        <main>
+            <!-- Current Price Section -->
+            <section class="current-price-section">
+                <div class="price-card">
+                    <h2>Current Gold Price</h2>
+                    <div class="price-display">
+                        <span class="currency">$</span>
+                        <span id="current-price" class="price-value">Loading...</span>
+                        <span class="unit">/ oz</span>
+                    </div>
+                    <div class="price-meta">
+                        <span id="price-source" class="source">Source: -</span>
+                        <span id="price-timestamp" class="timestamp">Last updated: -</span>
+                    </div>
+                    <button id="refresh-btn" class="btn btn-primary">Refresh Price</button>
+                </div>
+
+                <!-- Prediction Card -->
+                <div class="prediction-card">
+                    <h2>🤖 AI Prediction</h2>
+                    <div id="prediction-content">
+                        <div class="prediction-direction">
+                            <span id="direction-icon" class="direction-icon">📈</span>
+                            <span id="direction-text" class="direction-text">Calculating...</span>
+                        </div>
+                        <div class="prediction-details">
+                            <div class="detail-item">
+                                <label>Predicted Price:</label>
+                                <span id="predicted-price">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Expected Change:</label>
+                                <span id="price-change">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Confidence:</label>
+                                <span id="confidence">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="predict-btn" class="btn btn-secondary">Get Prediction</button>
+                </div>
+            </section>
+
+            <!-- Chart Section -->
+            <section class="chart-section">
+                <div class="chart-header">
+                    <h2>Price History Chart</h2>
+                    <div class="chart-controls">
+                        <button id="update-chart-btn" class="btn btn-sm">Update Chart</button>
+                    </div>
+                </div>
+                <div id="price-chart"></div>
+            </section>
+
+            <!-- Stats Section -->
+            <section class="stats-section">
+                <div class="stat-card">
+                    <h3>Data Points</h3>
+                    <p id="data-points" class="stat-value">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>24h High</h3>
+                    <p id="high-24h" class="stat-value">-</p>
+                </div>
+                <div class="stat-card">
+                    <h3>24h Low</h3>
+                    <p id="low-24h" class="stat-value">-</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Average</h3>
+                    <p id="average-price" class="stat-value">-</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Powered by Deep Learning LSTM Model | Data updated every minute</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
