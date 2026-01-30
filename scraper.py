@@ -1,6 +1,30 @@
 """
 Gold Price Web Scraper
 Fetches live gold prices from various sources
+
+DATA SOURCE EXPLANATION:
+========================
+This module is responsible for fetching live gold prices from the internet.
+
+How it works:
+1. The scraper tries multiple sources in order of priority
+2. If the first source fails, it tries the next one
+3. If all real sources fail, it generates mock data for testing
+
+Current Sources (in order):
+1. goldprice.org - International gold price in USD/oz
+2. investing.com - Financial data website with gold prices
+3. Mock data - Randomly generated prices for testing/fallback
+
+To add a new source (e.g., emasku.co.id):
+1. Create a new method like scrape_emasku()
+2. Add it to get_current_price() method
+3. See DATA_SOURCES.md for detailed guide
+
+Where data is used:
+- app.py calls scraper.get_current_price() every 60 seconds
+- Prices are stored in price_history list
+- ML model uses this data to make predictions
 """
 import requests
 from bs4 import BeautifulSoup
@@ -88,6 +112,57 @@ class GoldPriceScraper:
             print(f"Error scraping investing.com: {e}")
             return None
     
+    def scrape_emasku(self):
+        """
+        Scrape gold price from emasku.co.id
+        
+        Example implementation for Indonesian gold price website.
+        Note: This is a template - you need to inspect the actual website
+        and adjust the selectors based on the HTML structure.
+        """
+        try:
+            url = "https://www.emasku.co.id/en/gold-price"
+            response = requests.get(url, headers=self.headers, timeout=10)
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # TODO: Inspect the website to find the correct selector
+            # Example selectors (adjust based on actual HTML):
+            # price_element = soup.find('div', {'class': 'price-value'})
+            # price_element = soup.find('span', {'id': 'gold-price'})
+            # price_element = soup.select_one('.price-container .price')
+            
+            # For now, return None since we don't have the exact selector
+            # Uncomment and adjust when you know the correct selector:
+            """
+            price_element = soup.find('div', {'class': 'YOUR_CLASS_HERE'})
+            if price_element:
+                price_text = price_element.text.strip()
+                # Clean the price text (remove Rp, commas, etc.)
+                price_text = price_text.replace('Rp', '').replace(',', '').replace('.', '').strip()
+                price = float(price_text)
+                
+                # Note: emasku prices are typically in IDR per gram
+                # You may want to convert to USD per oz for consistency
+                # Example conversion (adjust based on current rates):
+                # price_usd_oz = price / 15000 * 31.1035
+                
+                if not self._validate_price(price):
+                    print(f"Invalid price detected from emasku.co.id: {price}")
+                    return None
+                
+                return {
+                    'price': price,
+                    'source': 'emasku.co.id',
+                    'timestamp': datetime.now().isoformat(),
+                    'currency': 'IDR',
+                    'unit': 'gram'
+                }
+            """
+            return None
+        except Exception as e:
+            print(f"Error scraping emasku.co.id: {e}")
+            return None
+    
     def get_mock_price(self):
         """Generate mock price for testing when scraping fails"""
         import random
@@ -102,13 +177,38 @@ class GoldPriceScraper:
         }
     
     def get_current_price(self):
-        """Get current gold price from available sources"""
-        # Try multiple sources
+        """
+        Get current gold price from available sources
+        
+        This method tries multiple sources in order:
+        1. goldprice.org (primary)
+        2. investing.com (backup)
+        3. Mock data (fallback for testing)
+        
+        To add a new source (e.g., emasku.co.id):
+        - Add: price_data = self.scrape_emasku()
+        - Place it where you want in the priority order
+        
+        Example with emasku.co.id as primary source:
+        ```
+        price_data = self.scrape_emasku()
+        if not price_data:
+            price_data = self.scrape_goldprice_org()
+        if not price_data:
+            price_data = self.scrape_investing_com()
+        if not price_data:
+            price_data = self.get_mock_price()
+        ```
+        
+        Returns:
+            dict: Price data with keys: price, source, timestamp, currency, unit
+        """
+        # Try multiple sources in order of preference
         price_data = self.scrape_goldprice_org()
         if not price_data:
             price_data = self.scrape_investing_com()
         if not price_data:
-            # Fallback to mock data
+            # Fallback to mock data for testing/development
             price_data = self.get_mock_price()
         
         return price_data

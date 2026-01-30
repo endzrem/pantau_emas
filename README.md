@@ -80,6 +80,7 @@ Pantau Emas is a web application that monitors gold prices in real-time and uses
 
 - **[⚡ GETTING_STARTED.md](GETTING_STARTED.md)** - 5-minute quick start guide
 - **[📚 TUTORIAL.md](TUTORIAL.md)** - Complete step-by-step guide for beginners
+- **[📊 DATA_SOURCES.md](DATA_SOURCES.md)** - Where data comes from & how to add new sources
 - **[⚡ QUICKSTART.md](QUICKSTART.md)** - Quick reference guide
 - **[🔒 PRODUCTION.md](PRODUCTION.md)** - Production deployment guide
 - **[🧪 demo.py](demo.py)** - Quick demo script to test the system
@@ -171,6 +172,44 @@ def scrape_new_source(self):
     # Your scraping logic here
     pass
 ```
+Then update `get_current_price()` to include it. See [DATA_SOURCES.md](DATA_SOURCES.md) for detailed guide.
+
+## Frequently Asked Questions
+
+### Where does the gold price data come from?
+
+The system fetches live gold prices from multiple websites through web scraping:
+1. **goldprice.org** - Primary source (international prices)
+2. **investing.com** - Backup source
+3. **Mock data** - Fallback for testing
+
+For detailed information, see [DATA_SOURCES.md](DATA_SOURCES.md).
+
+### How can I add a new price source (e.g., emasku.co.id)?
+
+1. Open `scraper.py`
+2. Add a new method like `scrape_emasku()`
+3. Update `get_current_price()` to include your new source
+4. Test with `python scraper.py`
+
+Complete guide with examples: [DATA_SOURCES.md](DATA_SOURCES.md)
+
+### How often is the price updated?
+
+The system fetches new prices every **60 seconds** automatically in the background.
+
+### Can I use prices in different currencies (IDR, EUR, etc.)?
+
+Yes! When creating your scraper method, specify the currency in the return data:
+```python
+return {
+    'price': price,
+    'currency': 'IDR',  # or 'EUR', 'GBP', etc.
+    'unit': 'gram'
+}
+```
+
+See [DATA_SOURCES.md](DATA_SOURCES.md) for currency conversion tips.
 
 ### Adjust Model Parameters
 In `model.py`, modify the model architecture or training parameters:
