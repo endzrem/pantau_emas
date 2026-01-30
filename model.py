@@ -58,7 +58,7 @@ class GoldPricePredictor:
         
         return np.array(X), np.array(y)
     
-    def train(self, prices, epochs=50, batch_size=32):
+    def train(self, prices, epochs=50, batch_size=32, verbose=1):
         """Train the model on historical price data"""
         X, y = self.prepare_data(prices)
         
@@ -75,7 +75,7 @@ class GoldPricePredictor:
             epochs=epochs,
             batch_size=batch_size,
             validation_split=0.2,
-            verbose=1
+            verbose=verbose
         )
         
         self.is_trained = True

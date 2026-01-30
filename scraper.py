@@ -16,6 +16,18 @@ class GoldPriceScraper:
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
+        self.min_valid_price = 1000.0  # Minimum valid gold price per oz
+        self.max_valid_price = 5000.0  # Maximum valid gold price per oz
+    
+    def _validate_price(self, price):
+        """Validate that price is within reasonable bounds"""
+        if price is None:
+            return False
+        try:
+            price_float = float(price)
+            return self.min_valid_price <= price_float <= self.max_valid_price
+        except (ValueError, TypeError):
+            return False
     
     def scrape_goldprice_org(self):
         """Scrape gold price from goldprice.org"""
@@ -30,6 +42,12 @@ class GoldPriceScraper:
                 price_text = price_element.text.strip()
                 # Extract numeric value
                 price = float(''.join(filter(lambda x: x.isdigit() or x == '.', price_text)))
+                
+                # Validate price
+                if not self._validate_price(price):
+                    print(f"Invalid price detected from goldprice.org: {price}")
+                    return None
+                
                 return {
                     'price': price,
                     'source': 'goldprice.org',
@@ -53,6 +71,12 @@ class GoldPriceScraper:
             if price_element:
                 price_text = price_element.text.strip()
                 price = float(price_text.replace(',', ''))
+                
+                # Validate price
+                if not self._validate_price(price):
+                    print(f"Invalid price detected from investing.com: {price}")
+                    return None
+                
                 return {
                     'price': price,
                     'source': 'investing.com',

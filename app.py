@@ -19,6 +19,7 @@ predictor = GoldPricePredictor(sequence_length=60)
 # Store recent prices in memory (in production, use database)
 price_history = []
 max_history = 1000
+price_history_lock = threading.Lock()  # Thread-safe access to price_history
 
 # Load or train model
 model_path = 'gold_model.h5'
@@ -35,11 +36,12 @@ def update_prices_periodically():
     while True:
         try:
             price_data = scraper.get_current_price()
-            price_history.append(price_data)
-            
-            # Keep only recent history
-            if len(price_history) > max_history:
-                price_history.pop(0)
+            with price_history_lock:
+                price_history.append(price_data)
+                
+                # Keep only recent history
+                if len(price_history) > max_history:
+                    price_history.pop(0)
             
             print(f"Updated price: ${price_data['price']} at {price_data['timestamp']}")
         except Exception as e:
@@ -58,13 +60,13 @@ def index():
 @app.route('/api/current-price')
 def get_current_price():
     """API endpoint to get current gold price"""
+    # Return the most recent price from history if available
+    with price_history_lock:
+        if price_history:
+            return jsonify(price_history[-1])
+    
+    # Otherwise fetch a new price
     price_data = scraper.get_current_price()
-    
-    # Add to history
-    price_history.append(price_data)
-    if len(price_history) > max_history:
-        price_history.pop(0)
-    
     return jsonify(price_data)
 
 
@@ -72,21 +74,26 @@ def get_current_price():
 def get_price_history():
     """API endpoint to get price history"""
     limit = request.args.get('limit', 100, type=int)
-    return jsonify(price_history[-limit:])
+    # Validate and constrain limit
+    limit = min(max(1, limit), 1000)
+    
+    with price_history_lock:
+        return jsonify(price_history[-limit:])
 
 
 @app.route('/api/predict')
 def predict_price():
     """API endpoint to get price prediction"""
     try:
-        if len(price_history) < 60:
-            return jsonify({
-                'error': 'Not enough historical data for prediction',
-                'message': 'Need at least 60 data points'
-            }), 400
-        
-        # Extract prices from history
-        prices = [p['price'] for p in price_history]
+        with price_history_lock:
+            if len(price_history) < 60:
+                return jsonify({
+                    'error': 'Not enough historical data for prediction',
+                    'message': 'Need at least 60 data points'
+                }), 400
+            
+            # Extract prices from history
+            prices = [p['price'] for p in price_history]
         
         # Get prediction
         prediction = predictor.predict_direction(prices)
@@ -98,16 +105,19 @@ def predict_price():
 
 @app.route('/api/train-model', methods=['POST'])
 def train_model():
-    """API endpoint to retrain model with current history"""
+    """API endpoint to retrain model with current history
+    Note: In production, add authentication and rate limiting to this endpoint"""
     try:
-        if len(price_history) < 100:
-            return jsonify({
-                'error': 'Not enough data to train model',
-                'message': 'Need at least 100 data points'
-            }), 400
+        with price_history_lock:
+            if len(price_history) < 100:
+                return jsonify({
+                    'error': 'Not enough data to train model',
+                    'message': 'Need at least 100 data points'
+                }), 400
+            
+            prices = [p['price'] for p in price_history]
         
-        prices = [p['price'] for p in price_history]
-        predictor.train(prices, epochs=20)
+        predictor.train(prices, epochs=20, verbose=0)
         predictor.save_model(model_path)
         
         return jsonify({
@@ -124,4 +134,5 @@ if __name__ == '__main__':
     update_thread.start()
     
     # Run Flask app
+    # For production, set debug=False and use a production WSGI server like Gunicorn
     app.run(debug=True, host='0.0.0.0', port=5000)

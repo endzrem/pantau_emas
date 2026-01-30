@@ -178,8 +178,9 @@ async function getPrediction() {
         
         const changeColor = prediction.change >= 0 ? '#10b981' : '#ef4444';
         const changeSign = prediction.change >= 0 ? '+' : '';
-        document.getElementById('price-change').innerHTML = 
-            `<span style="color: ${changeColor}">${changeSign}$${prediction.change.toFixed(2)}</span>`;
+        const changeElement = document.getElementById('price-change');
+        changeElement.textContent = `${changeSign}$${prediction.change.toFixed(2)}`;
+        changeElement.style.color = changeColor;
         
         document.getElementById('confidence').textContent = 
             `${prediction.confidence.toFixed(2)}%`;
