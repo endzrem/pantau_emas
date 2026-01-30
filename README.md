@@ -2,6 +2,16 @@
 
 Real-Time Gold Price Monitoring and AI-Powered Prediction System
 
+---
+
+## 🚀 New User? Start Here!
+
+**→ [📚 Complete Step-by-Step Tutorial](TUTORIAL.md)** - Perfect for beginners!
+
+**→ [⚡ Quick Start Guide](QUICKSTART.md)** - For experienced developers
+
+---
+
 ## Overview
 
 Pantau Emas is a web application that monitors gold prices in real-time and uses deep learning (LSTM neural networks) to predict whether the price will go up or down. The system includes:
@@ -56,6 +66,20 @@ Pantau Emas is a web application that monitors gold prices in real-time and uses
 
 4. **Open your browser**
    Navigate to `http://localhost:5000`
+
+5. **Quick Test (Optional)**
+   In a new terminal, run the demo script to quickly test the system:
+   ```bash
+   python demo.py
+   ```
+   This will add test data and show you a prediction!
+
+## Documentation
+
+- **[📚 TUTORIAL.md](TUTORIAL.md)** - Complete step-by-step guide for beginners
+- **[⚡ QUICKSTART.md](QUICKSTART.md)** - Quick reference guide
+- **[🔒 PRODUCTION.md](PRODUCTION.md)** - Production deployment guide
+- **[🧪 demo.py](demo.py)** - Quick demo script to test the system
 
 ## Project Structure
 
