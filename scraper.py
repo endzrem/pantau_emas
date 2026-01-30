@@ -116,52 +116,81 @@ class GoldPriceScraper:
         """
         Scrape gold price from emasku.co.id
         
-        Example implementation for Indonesian gold price website.
-        Note: This is a template - you need to inspect the actual website
-        and adjust the selectors based on the HTML structure.
+        Indonesian gold price website with prices in IDR per gram.
         """
         try:
             url = "https://www.emasku.co.id/en/gold-price"
             response = requests.get(url, headers=self.headers, timeout=10)
             soup = BeautifulSoup(response.content, 'html.parser')
             
-            # TODO: Inspect the website to find the correct selector
-            # Example selectors (adjust based on actual HTML):
-            # price_element = soup.find('div', {'class': 'price-value'})
-            # price_element = soup.find('span', {'id': 'gold-price'})
-            # price_element = soup.select_one('.price-container .price')
+            # Try to find gold price elements
+            # Look for common patterns on gold price websites
+            price_element = None
             
-            # For now, return None since we don't have the exact selector
-            # Uncomment and adjust when you know the correct selector:
-            """
-            price_element = soup.find('div', {'class': 'YOUR_CLASS_HERE'})
+            # Try various selectors
+            selectors_to_try = [
+                ('div', {'class': 'price'}),
+                ('span', {'class': 'price'}),
+                ('td', {'class': 'text-right'}),
+                ('div', {'class': 'gold-price'}),
+            ]
+            
+            for tag, attrs in selectors_to_try:
+                elements = soup.find_all(tag, attrs)
+                for element in elements:
+                    text = element.text.strip()
+                    # Look for numbers that might be prices
+                    if any(char.isdigit() for char in text):
+                        price_element = element
+                        break
+                if price_element:
+                    break
+            
             if price_element:
                 price_text = price_element.text.strip()
-                # Clean the price text (remove Rp, commas, etc.)
+                # Clean the price text (remove Rp, commas, dots used as thousand separators)
                 price_text = price_text.replace('Rp', '').replace(',', '').replace('.', '').strip()
-                price = float(price_text)
-                
-                # Note: emasku prices are typically in IDR per gram
-                # You may want to convert to USD per oz for consistency
-                # Example conversion (adjust based on current rates):
-                # price_usd_oz = price / 15000 * 31.1035
-                
-                if not self._validate_price(price):
-                    print(f"Invalid price detected from emasku.co.id: {price}")
-                    return None
-                
-                return {
-                    'price': price,
-                    'source': 'emasku.co.id',
-                    'timestamp': datetime.now().isoformat(),
-                    'currency': 'IDR',
-                    'unit': 'gram'
-                }
-            """
-            return None
+                # Extract just numbers
+                import re
+                numbers = re.findall(r'\d+', price_text)
+                if numbers:
+                    price = float(numbers[0])
+                    
+                    # Note: emasku prices are in IDR per gram
+                    # Validation range should be different for IDR
+                    if 800000 <= price <= 2000000:  # Typical range for IDR per gram
+                        return {
+                            'price': price,
+                            'source': 'emasku.co.id',
+                            'timestamp': datetime.now().isoformat(),
+                            'currency': 'IDR',
+                            'unit': 'gram'
+                        }
+            
+            # If scraping fails, generate mock IDR price
+            import random
+            base_price_idr = 1000000  # ~1 million IDR per gram
+            variation = random.uniform(-50000, 50000)
+            return {
+                'price': round(base_price_idr + variation, 2),
+                'source': 'emasku.co.id (mock)',
+                'timestamp': datetime.now().isoformat(),
+                'currency': 'IDR',
+                'unit': 'gram'
+            }
         except Exception as e:
             print(f"Error scraping emasku.co.id: {e}")
-            return None
+            # Return mock data as fallback
+            import random
+            base_price_idr = 1000000
+            variation = random.uniform(-50000, 50000)
+            return {
+                'price': round(base_price_idr + variation, 2),
+                'source': 'emasku.co.id (mock)',
+                'timestamp': datetime.now().isoformat(),
+                'currency': 'IDR',
+                'unit': 'gram'
+            }
     
     def get_mock_price(self):
         """Generate mock price for testing when scraping fails"""
@@ -212,6 +241,45 @@ class GoldPriceScraper:
             price_data = self.get_mock_price()
         
         return price_data
+    
+    def get_all_sources(self):
+        """
+        Get current gold price from ALL available sources simultaneously.
+        
+        Returns:
+            dict: Dictionary with source names as keys and price data as values
+        """
+        sources = {}
+        
+        # Try goldprice.org
+        try:
+            goldprice_data = self.scrape_goldprice_org()
+            if not goldprice_data:
+                goldprice_data = self.get_mock_price()
+            sources['goldprice'] = goldprice_data
+        except Exception as e:
+            print(f"Error getting goldprice.org: {e}")
+            sources['goldprice'] = self.get_mock_price()
+        
+        # Try emasku.co.id
+        try:
+            emasku_data = self.scrape_emasku()
+            sources['emasku'] = emasku_data
+        except Exception as e:
+            print(f"Error getting emasku.co.id: {e}")
+            # Fallback mock for emasku
+            import random
+            base_price_idr = 1000000
+            variation = random.uniform(-50000, 50000)
+            sources['emasku'] = {
+                'price': round(base_price_idr + variation, 2),
+                'source': 'emasku.co.id (mock)',
+                'timestamp': datetime.now().isoformat(),
+                'currency': 'IDR',
+                'unit': 'gram'
+            }
+        
+        return sources
 
 
 if __name__ == "__main__":

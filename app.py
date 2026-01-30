@@ -16,8 +16,12 @@ scraper = GoldPriceScraper()
 predictor = GoldPricePredictor(sequence_length=60)
 
 # Store recent prices in memory (in production, use database)
-price_history = []
-max_history = 1000
+# Changed to store data per source
+price_history_by_source = {
+    'goldprice': [],
+    'emasku': []
+}
+max_history = 50000  # Increased to allow continuous tracking (up to 50k data points)
 price_history_lock = threading.Lock()
 
 # Model path (Render filesystem is ephemeral but OK for demo)
@@ -33,18 +37,26 @@ if not predictor.load_model(model_path):
 
 
 def update_prices_periodically():
-    """Background thread to update prices periodically"""
+    """Background thread to update prices periodically from all sources"""
     while True:
         try:
-            price_data = scraper.get_current_price()
+            # Get prices from all sources
+            all_prices = scraper.get_all_sources()
+            
             with price_history_lock:
-                price_history.append(price_data)
-
-                # Keep only recent history
-                if len(price_history) > max_history:
-                    price_history.pop(0)
-
-            print(f"Updated price: ${price_data['price']} at {price_data['timestamp']}")
+                # Update goldprice history
+                if 'goldprice' in all_prices:
+                    price_history_by_source['goldprice'].append(all_prices['goldprice'])
+                    if len(price_history_by_source['goldprice']) > max_history:
+                        price_history_by_source['goldprice'].pop(0)
+                    print(f"Updated goldprice: ${all_prices['goldprice']['price']} at {all_prices['goldprice']['timestamp']}")
+                
+                # Update emasku history
+                if 'emasku' in all_prices:
+                    price_history_by_source['emasku'].append(all_prices['emasku'])
+                    if len(price_history_by_source['emasku']) > max_history:
+                        price_history_by_source['emasku'].pop(0)
+                    print(f"Updated emasku: Rp{all_prices['emasku']['price']} at {all_prices['emasku']['timestamp']}")
         except Exception as e:
             print(f"Error updating prices: {e}")
 
@@ -60,34 +72,61 @@ def index():
 
 @app.route("/api/current-price")
 def get_current_price():
+    """Get current price from primary source (goldprice.org)"""
     with price_history_lock:
-        if price_history:
-            return jsonify(price_history[-1])
+        if price_history_by_source['goldprice']:
+            return jsonify(price_history_by_source['goldprice'][-1])
 
     price_data = scraper.get_current_price()
     return jsonify(price_data)
 
 
+@app.route("/api/current-prices-all")
+def get_current_prices_all():
+    """Get current prices from all sources"""
+    with price_history_lock:
+        result = {}
+        for source_name, history in price_history_by_source.items():
+            if history:
+                result[source_name] = history[-1]
+        return jsonify(result)
+
+
 @app.route("/api/price-history")
 def get_price_history():
-    limit = request.args.get("limit", 100, type=int)
-    limit = min(max(1, limit), 1000)
+    """Get price history from primary source (backward compatibility)"""
+    limit = request.args.get("limit", 1000, type=int)
+    limit = min(max(1, limit), max_history)
 
     with price_history_lock:
-        return jsonify(price_history[-limit:])
+        return jsonify(price_history_by_source['goldprice'][-limit:])
+
+
+@app.route("/api/price-history-all")
+def get_price_history_all():
+    """Get price history from all sources"""
+    limit = request.args.get("limit", 1000, type=int)
+    limit = min(max(1, limit), max_history)
+
+    with price_history_lock:
+        result = {}
+        for source_name, history in price_history_by_source.items():
+            result[source_name] = history[-limit:]
+        return jsonify(result)
 
 
 @app.route("/api/predict")
 def predict_price():
+    """API endpoint to get price prediction"""
     try:
         with price_history_lock:
-            if len(price_history) < 60:
+            if len(price_history_by_source['goldprice']) < 60:
                 return jsonify({
                     "error": "Not enough historical data",
                     "message": "Need at least 60 data points"
                 }), 400
 
-            prices = [p["price"] for p in price_history]
+            prices = [p["price"] for p in price_history_by_source['goldprice']]
 
         prediction = predictor.predict_direction(prices)
         return jsonify(prediction)
@@ -101,13 +140,13 @@ def train_model():
     """Manual retraining endpoint (protect in real production)"""
     try:
         with price_history_lock:
-            if len(price_history) < 100:
+            if len(price_history_by_source['goldprice']) < 100:
                 return jsonify({
                     "error": "Not enough data",
                     "message": "Need at least 100 data points"
                 }), 400
 
-            prices = [p["price"] for p in price_history]
+            prices = [p["price"] for p in price_history_by_source['goldprice']]
 
         predictor.train(prices, epochs=20, verbose=0)
         predictor.save_model(model_path)
