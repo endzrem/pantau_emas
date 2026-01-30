@@ -1,0 +1,144 @@
+╔════════════════════════════════════════════════════════════════════╗
+║               PANTAU EMAS - DATA FLOW DIAGRAM                      ║
+╚════════════════════════════════════════════════════════════════════╝
+
+WHERE DATA COMES FROM:
+═══════════════════════
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    INTERNET SOURCES                             │
+│                                                                 │
+│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐       │
+│  │ goldprice.org│   │investing.com │   │  Mock Data   │       │
+│  │              │   │              │   │  (Fallback)  │       │
+│  │ USD/oz       │   │ USD/oz       │   │  USD/oz      │       │
+│  └──────┬───────┘   └──────┬───────┘   └──────┬───────┘       │
+│         │                  │                  │               │
+└─────────┼──────────────────┼──────────────────┼────────────────┘
+          │                  │                  │
+          └──────────┬───────┴──────────────────┘
+                     │
+                     ▼
+        ┌────────────────────────────┐
+        │   scraper.py               │
+        │   GoldPriceScraper         │
+        │                            │
+        │   get_current_price()      │
+        │   ├─ scrape_goldprice_org()│
+        │   ├─ scrape_investing_com()│
+        │   └─ get_mock_price()      │
+        └────────────┬───────────────┘
+                     │
+                     ▼
+        ┌────────────────────────────┐
+        │   Returns Price Data:      │
+        │   {                        │
+        │     price: 2050.00,        │
+        │     source: "goldprice.org"│
+        │     timestamp: "2026-...", │
+        │     currency: "USD",       │
+        │     unit: "oz"             │
+        │   }                        │
+        └────────────┬───────────────┘
+                     │
+                     ▼
+        ┌────────────────────────────┐
+        │   app.py                   │
+        │   Background Thread        │
+        │                            │
+        │   Every 60 seconds:        │
+        │   price = scraper.         │
+        │     get_current_price()    │
+        └────────────┬───────────────┘
+                     │
+                     ▼
+        ┌────────────────────────────┐
+        │   price_history[]          │
+        │   (In-Memory Storage)      │
+        │                            │
+        │   [price1, price2, ...]    │
+        └────────────┬───────────────┘
+                     │
+                     ▼
+        ┌────────────────────────────┐
+        │   model.py                 │
+        │   LSTM Neural Network      │
+        │                            │
+        │   Predicts: UP or DOWN     │
+        └────────────┬───────────────┘
+                     │
+                     ▼
+        ┌────────────────────────────┐
+        │   Web Interface            │
+        │   http://localhost:5000    │
+        │                            │
+        │   Shows:                   │
+        │   - Current Price          │
+        │   - Price Chart            │
+        │   - AI Prediction          │
+        │   - Statistics             │
+        └────────────────────────────┘
+
+
+HOW TO ADD NEW SOURCE (e.g., emasku.co.id):
+═══════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 1: Create scraper method in scraper.py                   │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ def scrape_emasku(self):                                │   │
+│  │     url = "https://www.emasku.co.id/en/gold-price"      │   │
+│  │     # Fetch and parse HTML                              │   │
+│  │     # Extract price                                      │   │
+│  │     return {                                             │   │
+│  │         'price': price,                                  │   │
+│  │         'source': 'emasku.co.id',                        │   │
+│  │         'currency': 'IDR',                               │   │
+│  │         'unit': 'gram'                                   │   │
+│  │     }                                                    │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 2: Add to get_current_price() method                     │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ def get_current_price(self):                            │   │
+│  │     price_data = self.scrape_emasku()  # ← Add this    │   │
+│  │     if not price_data:                                  │   │
+│  │         price_data = self.scrape_goldprice_org()        │   │
+│  │     if not price_data:                                  │   │
+│  │         price_data = self.scrape_investing_com()        │   │
+│  │     if not price_data:                                  │   │
+│  │         price_data = self.get_mock_price()              │   │
+│  │     return price_data                                   │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 3: Test it                                                │
+│  $ python scraper.py                                            │
+│                                                                 │
+│  Output should show:                                            │
+│  {                                                              │
+│    "price": 950000.0,                                           │
+│    "source": "emasku.co.id",                                    │
+│    ...                                                          │
+│  }                                                              │
+└─────────────────────────────────────────────────────────────────┘
+
+
+FILES TO EDIT:
+══════════════
+✅ scraper.py    - Add new scraping methods here
+❌ app.py        - No changes needed
+❌ model.py      - No changes needed
+❌ templates/    - No changes needed
+
+
+DOCUMENTATION:
+══════════════
+�� DATA_SOURCES.md       - Complete guide (8.9KB)
+⚡ QUICK_DATA_GUIDE.md   - Quick reference (4KB)
+📄 README.md             - FAQ section

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantau Emas - Gold Price Monitor & Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Pantau Emas</h1>
+            <p class="subtitle">Real-Time Gold Price Monitoring & AI Prediction</p>
+        </header>
+
+        <main>
+            <!-- Current Price Section - Multiple Sources -->
+            <section class="current-price-section">
+                <!-- GoldPrice.org Card -->
+                <div class="price-card">
+                    <h2>GoldPrice.org (USD/oz)</h2>
+                    <div class="price-display">
+                        <span class="currency">$</span>
+                        <span id="current-price-goldprice" class="price-value">Loading...</span>
+                        <span class="unit">/ oz</span>
+                    </div>
+                    <div class="price-meta">
+                        <span id="price-source-goldprice" class="source">Source: goldprice.org</span>
+                        <span id="price-timestamp-goldprice" class="timestamp">Last updated: -</span>
+                    </div>
+                </div>
+
+                <!-- Emasku.co.id Card -->
+                <div class="price-card">
+                    <h2>Emasku.co.id (IDR/gram)</h2>
+                    <div class="price-display">
+                        <span class="currency">Rp</span>
+                        <span id="current-price-emasku" class="price-value">Loading...</span>
+                        <span class="unit">/ gram</span>
+                    </div>
+                    <div class="price-meta">
+                        <span id="price-source-emasku" class="source">Source: emasku.co.id</span>
+                        <span id="price-timestamp-emasku" class="timestamp">Last updated: -</span>
+                    </div>
+                </div>
+
+                <!-- Prediction Card -->
+                <div class="prediction-card">
+                    <h2>🤖 AI Prediction</h2>
+                    <div id="prediction-content">
+                        <div class="prediction-direction">
+                            <span id="direction-icon" class="direction-icon">📈</span>
+                            <span id="direction-text" class="direction-text">Calculating...</span>
+                        </div>
+                        <div class="prediction-details">
+                            <div class="detail-item">
+                                <label>Predicted Price:</label>
+                                <span id="predicted-price">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Expected Change:</label>
+                                <span id="price-change">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Confidence:</label>
+                                <span id="confidence">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="predict-btn" class="btn btn-secondary">Get Prediction</button>
+                </div>
+            </section>
+
+            <!-- Chart Section - Separate charts for each source -->
+            <section class="chart-section">
+                <div class="chart-header">
+                    <h2>GoldPrice.org - Price History (USD/oz)</h2>
+                    <div class="chart-controls">
+                        <button id="update-chart-btn" class="btn btn-sm">Update Chart</button>
+                    </div>
+                </div>
+                <div id="price-chart-goldprice"></div>
+            </section>
+
+            <section class="chart-section">
+                <div class="chart-header">
+                    <h2>Emasku.co.id - Price History (IDR/gram)</h2>
+                </div>
+                <div id="price-chart-emasku"></div>
+            </section>
+
+            <!-- Stats Section -->
+            <section class="stats-section">
+                <h3 style="width: 100%; text-align: center; margin-bottom: 20px;">GoldPrice.org Statistics</h3>
+                <div class="stat-card">
+                    <h3>Data Points</h3>
+                    <p id="data-points-goldprice" class="stat-value">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>24h High</h3>
+                    <p id="high-24h-goldprice" class="stat-value">-</p>
+                </div>
+                <div class="stat-card">
+                    <h3>24h Low</h3>
+                    <p id="low-24h-goldprice" class="stat-value">-</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Average</h3>
+                    <p id="average-price-goldprice" class="stat-value">-</p>
+                </div>
+            </section>
+
+            <section class="stats-section">
+                <h3 style="width: 100%; text-align: center; margin-bottom: 20px;">Emasku.co.id Statistics</h3>
+                <div class="stat-card">
+                    <h3>Data Points</h3>
+                    <p id="data-points-emasku" class="stat-value">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>24h High</h3>
+                    <p id="high-24h-emasku" class="stat-value">-</p>
+                </div>
+                <div class="stat-card">
+                    <h3>24h Low</h3>
+                    <p id="low-24h-emasku" class="stat-value">-</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Average</h3>
+                    <p id="average-price-emasku" class="stat-value">-</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Powered by Deep Learning LSTM Model | Data updated every minute | Unlimited data tracking</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
