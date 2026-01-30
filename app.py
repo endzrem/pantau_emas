@@ -48,7 +48,9 @@ def update_prices_periodically():
         except Exception as e:
             print(f"Error updating prices: {e}")
 
-        time.sleep(60)
+        SCRAPE_INTERVAL = int(os.environ.get("SCRAPE_INTERVAL", 60))
+        time.sleep(SCRAPE_INTERVAL)
+
 
 
 @app.route("/")
